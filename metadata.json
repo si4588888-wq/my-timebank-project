@@ -1,0 +1,8 @@
+{
+  "name": "Skill Exchange & Time Bank",
+  "description": "Moneyless peer-to-peer skill exchange platform with AI matchmaking and a time-banking credit ledger.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

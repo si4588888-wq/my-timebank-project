@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "SkillBank member profile with offered and desired skills",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Auth UID" },
+        "name": { "type": "string", "description": "Full display name" },
+        "headline": { "type": "string", "description": "Professional or hobbyist tagline" },
+        "avatar": { "type": "string", "description": "Avatar image URL" },
+        "location": { "type": "string", "description": "City or online location" },
+        "bio": { "type": "string", "description": "Member biography" },
+        "timeBankBalance": { "type": "number", "description": "Current time credits in hours" },
+        "hoursTaught": { "type": "number", "description": "Total completed hours taught" },
+        "hoursLearned": { "type": "number", "description": "Total completed hours learned" },
+        "rating": { "type": "number", "description": "Member rating out of 5" },
+        "reviewCount": { "type": "number", "description": "Total reviews received" }
+      },
+      "required": ["id", "name", "timeBankBalance"]
+    },
+    "SwapSession": {
+      "title": "SwapSession",
+      "description": "Scheduled or completed 1-to-1 skill exchange session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Session unique identifier" },
+        "requesterId": { "type": "string", "description": "UID of the member initiating/learning" },
+        "providerId": { "type": "string", "description": "UID of the member teaching/hosting" },
+        "skill": { "type": "string", "description": "Skill name being exchanged" },
+        "durationHours": { "type": "number", "description": "Duration in hours" },
+        "date": { "type": "string", "description": "Scheduled date string" },
+        "status": { "type": "string", "description": "scheduled, in_progress, completed, cancelled" }
+      },
+      "required": ["id", "requesterId", "providerId", "skill", "durationHours", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Immutable ledger record of Time Bank credits earned, spent, or granted",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Transaction ID" },
+        "userId": { "type": "string", "description": "Owner of the credit entry" },
+        "counterpartyId": { "type": "string", "description": "Other party in the swap (optional)" },
+        "amount": { "type": "number", "description": "Credit amount, e.g. +1.0 or -1.0" },
+        "type": { "type": "string", "description": "earned, spent, escrow_hold, escrow_release, community_grant" },
+        "description": { "type": "string", "description": "Human-readable memo" },
+        "status": { "type": "string", "description": "completed, in_escrow" }
+      },
+      "required": ["id", "userId", "amount", "type", "description", "status"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Direct message thread between two SkillBank community members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Conversation ID (typically userA_userB)" },
+        "lastMessage": { "type": "string", "description": "Snippet of latest message text" },
+        "lastSenderId": { "type": "string", "description": "UID of sender who authored last message" },
+        "updatedAt": { "type": "string", "description": "Timestamp of most recent activity" }
+      },
+      "required": ["id"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual direct message within a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique message ID" },
+        "conversationId": { "type": "string", "description": "Parent conversation ID" },
+        "senderId": { "type": "string", "description": "UID of the message author" },
+        "senderName": { "type": "string", "description": "Display name of sender" },
+        "senderAvatar": { "type": "string", "description": "Avatar URL of sender" },
+        "text": { "type": "string", "description": "Body of direct message" },
+        "timestamp": { "type": "string", "description": "Firestore creation timestamp" }
+      },
+      "required": ["id", "conversationId", "senderId", "text"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app alerts for messages, swap session proposals, and status updates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique notification ID" },
+        "userId": { "type": "string", "description": "Target recipient user ID" },
+        "type": { "type": "string", "enum": ["message", "proposal", "session_update", "session_completed", "timebank_credit"] },
+        "title": { "type": "string", "description": "Notification title" },
+        "message": { "type": "string", "description": "Notification descriptive body" },
+        "senderId": { "type": "string", "description": "Optional sender UID" },
+        "senderName": { "type": "string", "description": "Optional sender display name" },
+        "senderAvatar": { "type": "string", "description": "Optional sender avatar URL" },
+        "read": { "type": "boolean", "description": "Whether notification has been read" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" },
+        "linkTab": { "type": "string", "description": "App tab destination" },
+        "linkTargetId": { "type": "string", "description": "Optional target ID" }
+      },
+      "required": ["id", "userId", "type", "title", "message", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual member profile and skill barter catalog"
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "In-app notifications for incoming messages and swap status updates"
+    },
+    "/swapSessions/{sessionId}": {
+      "schema": "SwapSession",
+      "description": "Skill swap appointments and barter sessions"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Moneyless time banking credit transaction records"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Direct chat conversation metadata and last message summary"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Real-time timestamped direct messages between participants"
+    }
+  }
+}

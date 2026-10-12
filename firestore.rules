@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      match /notifications/{notificationId} {
+        allow read, update, delete: if isOwner(userId);
+        allow create: if isAuthenticated();
+      }
+    }
+
+    // 2. Swap sessions collection
+    match /swapSessions/{sessionId} {
+      function isParticipant(data) {
+        return isAuthenticated() && (
+          data.requesterId == request.auth.uid ||
+          data.providerId == request.auth.uid ||
+          data.currentUserId == request.auth.uid ||
+          data.partnerId == request.auth.uid ||
+          (data.participantIds != null && request.auth.uid in data.participantIds)
+        );
+      }
+
+      allow read: if isParticipant(resource.data);
+      allow create: if isParticipant(request.resource.data);
+      allow update: if isParticipant(resource.data);
+      allow delete: if false;
+    }
+
+    // 3. Transactions collection (Time Bank ledger)
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.counterpartyId == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // 4. Real-time Chat Conversations and Messages
+    match /conversations/{conversationId} {
+      function isChatParticipant(data) {
+        return isAuthenticated() && (
+          (data.participantIds != null && request.auth.uid in data.participantIds) ||
+          data.initiatorId == request.auth.uid ||
+          data.recipientId == request.auth.uid
+        );
+      }
+
+      allow read: if isChatParticipant(resource.data);
+      allow create: if isChatParticipant(request.resource.data);
+      allow update: if isChatParticipant(resource.data);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+    }
+
+    // 5. Default Deny fallback
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
